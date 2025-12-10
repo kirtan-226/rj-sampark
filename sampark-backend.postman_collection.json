@@ -1,0 +1,712 @@
+{
+  "info": {
+    "name": "Sampark Backend API",
+    "_postman_id": "sampark-backend-collection-id",
+    "description": "Postman collection for Sampark backend APIs (Auth, Users, Mandals, Teams, Ahevaal, Export).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET / (Health Check)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"ADMIN001\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"ADMIN001\",\n  \"phone\": \"9990001111\",\n  \"newPassword\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"ADMIN001\",\n  \"phone\": \"9990001111\",\n  \"newPassword\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"RK999\",\n  \"name\": \"New Karyakar\",\n  \"phone\": \"9888777766\",\n  \"password\": \"Temp@123\",\n  \"role\": \"KARYAKAR\",\n  \"mandalId\": \"{{mandalIdRK}}\",\n  \"teamId\": \"{{teamIdT001}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mandals",
+      "item": [
+        {
+          "name": "List Mandals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mandals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mandals"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const findByCode = (code) => (Array.isArray(data) ? data.find((m) => m.code === code) : null);",
+                  "const rk = findByCode('RK');",
+                  "const nk = findByCode('NK');",
+                  "if (rk && rk._id) pm.collectionVariables.set('mandalIdRK', rk._id);",
+                  "if (nk && nk._id) pm.collectionVariables.set('mandalIdNK', nk._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Mandal (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sample Mandal\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mandals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mandals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Mandal (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Mandal Name\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-2\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mandals/{{mandalIdRK}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mandals",
+                "{{mandalIdRK}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Mandal (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mandals/{{mandalIdRK}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mandals",
+                "{{mandalIdRK}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "Create Team (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sampark Team 1\",\n  \"leader\": \"{{leaderObjectId}}\",\n  \"members\": [\"{{memberObjectId1}}\", \"{{memberObjectId2}}\"],\n  \"mandalId\": \"{{mandalIdRK}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Teams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teams?mandalId={{mandalIdRK}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams"
+              ],
+              "query": [
+                {
+                  "key": "mandalId",
+                  "value": "{{mandalIdRK}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Team (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Sampark Team\",\n  \"leader\": \"{{leaderObjectId}}\",\n  \"members\": [\"{{memberObjectId1}}\"],\n  \"mandalId\": \"{{mandalIdRK}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/teams/{{teamIdT001}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams",
+                "{{teamIdT001}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (!Array.isArray(data)) return;",
+                  "const findByCode = (code) => data.find((t) => t.teamCode === code);",
+                  "const t1 = findByCode('T001');",
+                  "const t2 = findByCode('T002');",
+                  "if (t1 && t1._id) pm.collectionVariables.set('teamIdT001', t1._id);",
+                  "if (t2 && t2._id) pm.collectionVariables.set('teamIdT002', t2._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Team (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teams/{{teamIdT001}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams",
+                "{{teamIdT001}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ahevaal",
+      "item": [
+        {
+          "name": "Create Ahevaal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shyam Bhai\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Bharuch, XYZ area\",\n  \"specialExp\": \"Regular satsangi since 10 years\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ahevaals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ahevaals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "My Ahevaals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ahevaals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ahevaals",
+                "my"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ahevaal History (Scoped by Token Mandal)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ahevaals/mandal?teamId={{teamIdT001}}&from=2025-01-01&to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ahevaals",
+                "mandal"
+              ],
+              "query": [
+                {
+                  "key": "teamId",
+                  "value": "{{teamIdT001}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ahevaal History (Explicit Mandal)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ahevaals/mandal/{{mandalIdRK}}?teamId={{teamIdT001}}&from=2025-01-01&to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ahevaals",
+                "mandal",
+                "{{mandalIdRK}}"
+              ],
+              "query": [
+                {
+                  "key": "teamId",
+                  "value": "{{teamIdT001}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Export",
+      "item": [
+        {
+          "name": "Export Ahevaals CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/export/ahevaals/csv?mandalId={{mandalIdRK}}&teamId={{teamIdT001}}&from=2025-01-01&to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "export",
+                "ahevaals",
+                "csv"
+              ],
+              "query": [
+                {
+                  "key": "mandalId",
+                  "value": "{{mandalIdRK}}"
+                },
+                {
+                  "key": "teamId",
+                  "value": "{{teamIdT001}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Ahevaals PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuth}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/export/ahevaals/pdf?mandalId={{mandalIdRK}}&teamId={{teamIdT001}}&from=2025-01-01&to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "export",
+                "ahevaals",
+                "pdf"
+              ],
+              "query": [
+                {
+                  "key": "mandalId",
+                  "value": "{{mandalIdRK}}"
+                },
+                {
+                  "key": "teamId",
+                  "value": "{{teamIdT001}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "basicAuth",
+      "value": "QURNSU4wMDE6QWRtaW5AMTIz"
+    },
+    {
+      "key": "basicAuthAdmin",
+      "value": "QURNSU4wMDE6QWRtaW5AMTIz"
+    },
+    {
+      "key": "basicAuthSanchalakRK",
+      "value": "UksxMDA6UGFzc0AxMjM="
+    },
+    {
+      "key": "basicAuthTeamRK",
+      "value": "UksxMDI6UGFzc0AxMjM="
+    },
+    {
+      "key": "basicAuthTeamNK",
+      "value": "TksyMDE6UGFzc0AxMjM="
+    },
+    {
+      "key": "mandalIdRK",
+      "value": ""
+    },
+    {
+      "key": "mandalIdNK",
+      "value": ""
+    },
+    {
+      "key": "teamIdT001",
+      "value": ""
+    },
+    {
+      "key": "teamIdT002",
+      "value": ""
+    },
+    {
+      "key": "leaderObjectId",
+      "value": ""
+    },
+    {
+      "key": "memberObjectId1",
+      "value": ""
+    },
+    {
+      "key": "memberObjectId2",
+      "value": ""
+    }
+  ]
+}
