@@ -1,11 +1,11 @@
-﻿{
+{
   "name": "rajat_jayant_sampark",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run dev",
-    "dev": "npm run dev"
+    "start": "npm start",
+    "dev": "npm start"
   },
   "keywords": [],
   "author": "",
