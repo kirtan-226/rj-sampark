@@ -7,8 +7,13 @@ const teamSchema = new mongoose.Schema(
 
     mandalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Mandal' },
 
-    leader: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    leader: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // shared team login (auto-created user account)
+    teamLoginUserId: { type: String },
+    teamLoginPassword: { type: String },
+    teamLoginUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
