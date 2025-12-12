@@ -9,14 +9,11 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['ADMIN', 'NIRDESHAK', 'SANCHALAK', 'NIRIKSHAK', 'KARYAKAR'],
+      enum: ['ADMIN', 'NIRDESHAK', 'SANCHALAK', 'NIRIKSHAK', 'TEAM_LEADER', 'KARYAKAR'],
       default: 'KARYAKAR',
     },
 
-    // For nirdeshak (xetra-level) or generic tagging
     xetra: { type: String },
-
-    // For nirikshak: one or more mandals they supervise
     assignedMandals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mandal' }],
 
     mandalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Mandal', required: false },
@@ -24,7 +21,6 @@ const userSchema = new mongoose.Schema(
 
     isActive: { type: Boolean, default: true },
 
-    // for forgot/reset password
     resetCode: { type: String },
     resetCodeExpiresAt: { type: Date },
   },

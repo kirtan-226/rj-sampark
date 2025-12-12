@@ -2,7 +2,7 @@
   "info": {
     "name": "Sampark Backend API",
     "_postman_id": "sampark-backend-collection-id",
-    "description": "Postman collection for Sampark backend APIs (Auth, Users, Mandals, Teams, Ahevaal, Export).",
+    "description": "Postman collection for Sampark backend APIs (Auth, Users, Mandals, Teams, Ahevaal, Export). Uses Basic auth on every protected call: base64(userId:password).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -31,7 +31,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Login",
+          "name": "Login (use Basic auth afterwards)",
           "request": {
             "method": "POST",
             "header": [
@@ -127,12 +127,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"RK999\",\n  \"name\": \"New Karyakar\",\n  \"phone\": \"9888777766\",\n  \"password\": \"Temp@123\",\n  \"role\": \"KARYAKAR\",\n  \"mandalId\": \"{{mandalIdRK}}\",\n  \"teamId\": \"{{teamIdT001}}\"\n}"
+              "raw": "{\n  \"userId\": \"RK999\",\n  \"name\": \"New Karyakar\",\n  \"phone\": \"9888777766\",\n  \"password\": \"Pass@123\",\n  \"role\": \"KARYAKAR\",\n  \"mandalId\": \"{{mandalIdRK}}\",\n  \"teamId\": \"{{teamIdT001}}\",\n  \"xetra\": \"Bharuch-1\",\n  \"assignedMandals\": [\"{{mandalIdNK}}\"]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
@@ -153,7 +153,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthTeamRK}}"
               }
             ],
             "url": {
@@ -181,7 +181,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "url": {
@@ -202,7 +202,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const data = pm.response.json();",
-                  "const findByCode = (code) => (Array.isArray(data) ? data.find((m) => m.code === code) : null);",
+                  "if (!Array.isArray(data)) { return; }",
+                  "const findByCode = (code) => data.find((m) => m.code === code);",
                   "const rk = findByCode('RK');",
                   "const nk = findByCode('NK');",
                   "if (rk && rk._id) pm.collectionVariables.set('mandalIdRK', rk._id);",
@@ -223,12 +224,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Sample Mandal\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-1\"\n}"
+              "raw": "{\n  \"name\": \"Sample Mandal\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-1\",\n  \"mandal_id\": 999\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/mandals",
@@ -253,12 +254,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Mandal Name\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-2\"\n}"
+              "raw": "{\n  \"name\": \"Updated Mandal Name\",\n  \"code\": \"SM\",\n  \"xetra\": \"Bharuch-2\",\n  \"mandal_id\": 999\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/mandals/{{mandalIdRK}}",
@@ -280,7 +281,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "url": {
@@ -312,12 +313,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthSanchalakRK}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Sampark Team 1\",\n  \"leader\": \"{{leaderObjectId}}\",\n  \"members\": [\"{{memberObjectId1}}\", \"{{memberObjectId2}}\"],\n  \"mandalId\": \"{{mandalIdRK}}\"\n}"
+              "raw": "{\n  \"name\": \"Sampark Team 1\",\n  \"mandalId\": \"{{mandalIdRK}}\",\n  \"members\": [\n    { \"name\": \"Team Sevak 1\", \"phone\": \"9000011111\" },\n    { \"name\": \"Team Sevak 2\", \"phone\": \"9000011112\" }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/teams",
@@ -338,7 +339,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthSanchalakRK}}"
               }
             ],
             "url": {
@@ -357,6 +358,50 @@
                 }
               ]
             }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (!Array.isArray(data)) { return; }",
+                  "const findByCode = (code) => data.find((t) => t.teamCode === code);",
+                  "const t1 = findByCode('T001');",
+                  "const t2 = findByCode('T002');",
+                  "if (t1 && t1._id) pm.collectionVariables.set('teamIdT001', t1._id);",
+                  "if (t2 && t2._id) pm.collectionVariables.set('teamIdT002', t2._id);",
+                  "if (t1 && t1.leader && t1.leader._id) pm.collectionVariables.set('leaderUserId', t1.leader._id);",
+                  "if (t1 && Array.isArray(t1.members) && t1.members[0] && t1.members[0]._id) pm.collectionVariables.set('memberUserId1', t1.members[0]._id);",
+                  "if (t1 && Array.isArray(t1.members) && t1.members[1] && t1.members[1]._id) pm.collectionVariables.set('memberUserId2', t1.members[1]._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Teams By Mandal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuthSanchalakRK}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teams/mandal/{{mandalIdRK}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams",
+                "mandal",
+                "{{mandalIdRK}}"
+              ]
+            }
           }
         },
         {
@@ -370,12 +415,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthSanchalakRK}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Sampark Team\",\n  \"leader\": \"{{leaderObjectId}}\",\n  \"members\": [\"{{memberObjectId1}}\"],\n  \"mandalId\": \"{{mandalIdRK}}\"\n}"
+              "raw": "{\n  \"name\": \"Updated Sampark Team\",\n  \"leader\": \"{{leaderUserId}}\",\n  \"members\": [\"{{leaderUserId}}\", \"{{memberUserId1}}\"],\n  \"mandalId\": \"{{mandalIdRK}}\",\n  \"newMembers\": [\n    { \"name\": \"New Sevak\", \"phone\": \"9000012222\" }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/teams/{{teamIdT001}}",
@@ -388,24 +433,7 @@
                 "{{teamIdT001}}"
               ]
             }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const data = pm.response.json();",
-                  "if (!Array.isArray(data)) return;",
-                  "const findByCode = (code) => data.find((t) => t.teamCode === code);",
-                  "const t1 = findByCode('T001');",
-                  "const t2 = findByCode('T002');",
-                  "if (t1 && t1._id) pm.collectionVariables.set('teamIdT001', t1._id);",
-                  "if (t2 && t2._id) pm.collectionVariables.set('teamIdT002', t2._id);"
-                ]
-              }
-            }
-          ]
+          }
         },
         {
           "name": "Delete Team (ADMIN/SANCHALAK)",
@@ -414,7 +442,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "url": {
@@ -446,12 +474,12 @@
               },
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthTeamRK}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Shyam Bhai\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Bharuch, XYZ area\",\n  \"specialExp\": \"Regular satsangi since 10 years\"\n}"
+              "raw": "{\n  \"name\": \"Shyam Bhai\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Bharuch, XYZ area\",\n  \"specialExp\": \"Regular satsangi since 10 years\",\n  \"startTime\": \"2025-01-10T09:00:00.000Z\",\n  \"endTime\": \"2025-01-10T10:00:00.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/ahevaals",
@@ -472,7 +500,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthTeamRK}}"
               }
             ],
             "url": {
@@ -495,7 +523,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthNirdeshak}}"
               }
             ],
             "url": {
@@ -532,7 +560,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthAdmin}}"
               }
             ],
             "url": {
@@ -575,7 +603,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthNirdeshak}}"
               }
             ],
             "url": {
@@ -617,7 +645,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Basic {{basicAuth}}"
+                "value": "Basic {{basicAuthNirdeshak}}"
               }
             ],
             "url": {
@@ -673,6 +701,14 @@
       "value": "UksxMDA6UGFzc0AxMjM="
     },
     {
+      "key": "basicAuthNirdeshak",
+      "value": "TklSREVTSEFLMDAxOlBhc3NAMTIz"
+    },
+    {
+      "key": "basicAuthNirikshakRK",
+      "value": "UksxMDE6UGFzc0AxMjM="
+    },
+    {
       "key": "basicAuthTeamRK",
       "value": "UksxMDI6UGFzc0AxMjM="
     },
@@ -697,15 +733,15 @@
       "value": ""
     },
     {
-      "key": "leaderObjectId",
+      "key": "leaderUserId",
       "value": ""
     },
     {
-      "key": "memberObjectId1",
+      "key": "memberUserId1",
       "value": ""
     },
     {
-      "key": "memberObjectId2",
+      "key": "memberUserId2",
       "value": ""
     }
   ]

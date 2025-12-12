@@ -19,15 +19,13 @@ const login = async (req, res) => {
         mandalId: user.mandalId,
         teamId: user.teamId,
       },
-      message: 'Login successful. Use Basic auth with userId:password for API calls.',
+      message: 'Login successful. Use x-user-id header (user.id) for API calls.',
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-// --------- Forgot / Reset password: verify userId + phone and set new password ----------
 
 const forgotPassword = async (req, res) => {
   try {
@@ -38,7 +36,7 @@ const forgotPassword = async (req, res) => {
     const user = await User.findOne({ userId, phone });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.passwordHash = newPassword;
+    user.passwordHash = newPassword; // plaintext (as you want)
     user.resetCode = undefined;
     user.resetCodeExpiresAt = undefined;
     await user.save();
@@ -50,11 +48,6 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// keep route for reset-password but reuse same logic for compatibility
 const resetPassword = forgotPassword;
 
-module.exports = {
-  login,
-  forgotPassword,
-  resetPassword,
-};
+module.exports = { login, forgotPassword, resetPassword };

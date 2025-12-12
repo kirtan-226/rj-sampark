@@ -12,10 +12,8 @@ router.post('/', auth, createAhevaal);
 // my submitted ahevaals
 router.get('/my', auth, listMyAhevaals);
 
-// mandal-wise history (uses mandal from token)
+// mandal-wise history
 router.get('/mandal', auth, requireRole('ADMIN', 'SANCHALAK', 'NIRDESHAK', 'NIRIKSHAK'), listByMandal);
-
-// mandal-wise history (explicit mandalId param)
 router.get('/mandal/:mandalId', auth, requireRole('ADMIN', 'SANCHALAK', 'NIRDESHAK', 'NIRIKSHAK'), listByMandal);
 
 module.exports = router;

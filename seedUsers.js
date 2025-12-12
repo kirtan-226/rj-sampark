@@ -55,10 +55,8 @@ const mandalsFromSql = [
 ];
 
 const users = [
-  // Admin
   { name: 'Admin', phone: '9990001111', password: 'Admin@123', role: 'ADMIN', userId: 'ADMIN001' },
 
-  // Nirdeshak (xetra-scoped, read-only)
   {
     name: 'Nirdeshak Bharuch-1',
     phone: '9990002001',

@@ -1,16 +1,35 @@
 const Ahevaal = require('../models/Ahevaal');
 const Mandal = require('../models/Mandal');
+const Team = require('../models/Team');
 
 const createAhevaal = async (req, res) => {
   try {
-    const { name, phone, address, specialExp, startTime, endTime } = req.body;
+    const { name, phone, address, specialExp, startTime, endTime, teamId: teamIdFromBody } = req.body;
 
-    if (!req.user.teamId)
-      return res.status(400).json({ message: 'User is not assigned to any team' });
+    if (!req.user?.id) return res.status(401).json({ message: 'Unauthorized' });
+
+    let teamId = req.user.teamId || teamIdFromBody || null;
+
+    // If teamId is missing, try to resolve by leader/member/teamLogin linkage
+    if (!teamId) {
+      const team = await Team.findOne({
+        $or: [
+          { leader: req.user.id },
+          { members: req.user.id },
+          { teamLoginUser: req.user.id },
+        ],
+      }).select('_id mandalId');
+      if (team) {
+        teamId = team._id;
+        if (!req.user.mandalId && team.mandalId) req.user.mandalId = team.mandalId;
+      }
+    }
+
+    if (!teamId) return res.status(400).json({ message: 'User is not assigned to any team' });
 
     const ahevaal = await Ahevaal.create({
       createdBy: req.user.id,
-      teamId: req.user.teamId,
+      teamId,
       mandalId: req.user.mandalId || null,
       name,
       phone,

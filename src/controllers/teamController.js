@@ -1,11 +1,20 @@
+const mongoose = require('mongoose');
 const Team = require('../models/Team');
 const User = require('../models/User');
 const Mandal = require('../models/Mandal');
 
 const generateTeamCode = async () => {
-  // very simple incremental code T001, T002,...
-  const count = await Team.countDocuments();
-  return 'T' + String(count + 1).padStart(3, '0');
+  // Find the highest existing teamCode and increment safely to avoid duplicates.
+  const last = await Team.findOne({ teamCode: { $regex: /^T\d+$/i } })
+    .sort({ teamCode: -1 })
+    .select('teamCode')
+    .lean();
+
+  if (!last || !last.teamCode) return 'T001';
+
+  const digits = last.teamCode.replace(/^\D+/g, '');
+  const num = parseInt(digits || '0', 10) || 0;
+  return 'T' + String(num + 1).padStart(3, '0');
 };
 
 const getAllowedMandalIds = async (user) => {
@@ -21,12 +30,14 @@ const getAllowedMandalIds = async (user) => {
 };
 
 const getMandalCode = async (mandalId) => {
+  if (!mandalId || !mongoose.Types.ObjectId.isValid(mandalId)) return null;
   const mandal = await Mandal.findById(mandalId).lean();
   return mandal?.code || null;
 };
 
 // Generate next userId like <mandalCode><increment>
 const getNextUserIdForMandal = async (mandalCode) => {
+  const BASE_SEQ = 100; // first user in a mandal starts at XXX100
   const users = await User.find({ userId: { $regex: `^${mandalCode}\\d+$`, $options: 'i' } }).select('userId');
   let maxSeq = 0;
   users.forEach((u) => {
@@ -34,7 +45,8 @@ const getNextUserIdForMandal = async (mandalCode) => {
     const n = parseInt(digits, 10);
     if (!Number.isNaN(n)) maxSeq = Math.max(maxSeq, n);
   });
-  return mandalCode + String(maxSeq + 1).padStart(3, '0');
+  const nextSeq = maxSeq >= BASE_SEQ ? maxSeq + 1 : BASE_SEQ;
+  return mandalCode + String(nextSeq).padStart(3, '0');
 };
 
 const passwordFromPhone = (phone) => {
@@ -65,46 +77,18 @@ const createUserForMember = async ({ name, phone, mandalId, teamId, mandalCode }
   return { user, credentials: { userId, password, name, phone } };
 };
 
-const createTeamLoginUser = async ({ teamName, mandalId, teamId, mandalCode }) => {
-  const userId = await getNextUserIdForMandal(mandalCode);
-
-  // generate a numeric 10-digit phone placeholder to satisfy schema uniqueness
-  let phone;
-  let attempts = 0;
-  while (!phone && attempts < 5) {
-    const candidate = String(8000000000 + Math.floor(Math.random() * 999999)).padEnd(10, '0');
-    // ensure unique phone
-    // eslint-disable-next-line no-await-in-loop
-    const exists = await User.findOne({ phone: candidate });
-    if (!exists) phone = candidate;
-    attempts += 1;
-  }
-  if (!phone) throw new Error('Unable to generate unique phone for team login');
-
-  const password = passwordFromPhone(phone);
-
-  const user = await User.create({
-    userId,
-    name: `${teamName} Team Login`,
-    phone,
-    passwordHash: password,
-    role: 'KARYAKAR',
-    mandalId,
-    teamId,
-  });
-
-  return { user, credentials: { userId, password } };
-};
-
 const createTeam = async (req, res) => {
   try {
-    const { name, members = [], mandalId } = req.body;
+    const { name, members = [], mandalId, leader: requestedLeader } = req.body;
 
     if (req.user.role !== 'ADMIN' && req.user.role !== 'SANCHALAK')
       return res.status(403).json({ message: 'Forbidden' });
 
+    if (!name) return res.status(400).json({ message: 'Team name is required' });
+
     const targetMandalId = mandalId || req.user.mandalId;
     if (!targetMandalId) return res.status(400).json({ message: 'mandalId is required' });
+    if (!mongoose.Types.ObjectId.isValid(targetMandalId)) return res.status(400).json({ message: 'Invalid mandal' });
 
     if (req.user.role === 'SANCHALAK' && req.user.mandalId?.toString() !== targetMandalId.toString())
       return res.status(403).json({ message: 'Cannot create team outside your mandal' });
@@ -112,12 +96,15 @@ const createTeam = async (req, res) => {
     const mandalCode = await getMandalCode(targetMandalId);
     if (!mandalCode) return res.status(400).json({ message: 'Invalid mandal' });
 
+    if (!Array.isArray(members) || members.length === 0)
+      return res.status(400).json({ message: 'At least one member is required to create a team' });
+
     const teamCode = await generateTeamCode();
 
     const team = await Team.create({
       teamCode,
       name,
-      leader: req.user?.id || null, // will update below once members created
+      leader: null,
       members: [],
       mandalId: targetMandalId,
     });
@@ -141,30 +128,23 @@ const createTeam = async (req, res) => {
     }
 
     const memberIds = createdMemberUsers.map((m) => m.user._id);
-    if (memberIds.length) {
-      team.members = memberIds;
-      team.leader = memberIds[0]; // first member as leader
-    } else {
-      team.leader = req.user.id; // fallback to creator
+    if (!memberIds.length) return res.status(400).json({ message: 'No members created' });
+
+    team.members = memberIds;
+    // default leader: first member created
+    team.leader = memberIds[0];
+    // if caller sent leader and it belongs to created members, honor it
+    if (requestedLeader && memberIds.map(String).includes(String(requestedLeader))) {
+      team.leader = requestedLeader;
     }
-
-    const { user: teamLoginUser, credentials: teamLoginCreds } = await createTeamLoginUser({
-      teamName: name,
-      mandalId: targetMandalId,
-      teamId: team._id,
-      mandalCode,
-    });
-
-    team.teamLoginUserId = teamLoginCreds.userId;
-    team.teamLoginPassword = teamLoginCreds.password;
-    team.teamLoginUser = teamLoginUser._id;
+    // update users with teamId
+    await User.updateMany({ _id: { $in: memberIds } }, { teamId: team._id });
     await team.save();
 
     res.status(201).json({
       team,
       members: createdMemberUsers.map((m) => m.user),
       memberCredentials: createdMemberUsers.map((m) => m.credentials),
-      teamLogin: teamLoginCreds,
     });
   } catch (err) {
     console.error(err);

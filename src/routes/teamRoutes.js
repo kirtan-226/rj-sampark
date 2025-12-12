@@ -11,6 +11,7 @@ const {
 // only ADMIN/SANCHALAK can manage teams
 router.post('/', auth, requireRole('ADMIN', 'SANCHALAK'), createTeam);
 router.get('/', auth, requireRole('ADMIN', 'SANCHALAK', 'NIRDESHAK', 'NIRIKSHAK'), listTeams);
+
 router.get('/mandal/:mandalId', auth, requireRole('ADMIN', 'SANCHALAK', 'NIRDESHAK', 'NIRIKSHAK'), listTeamsByMandal);
 router.patch('/:id', auth, requireRole('ADMIN', 'SANCHALAK'), updateTeam);
 router.delete('/:id', auth, requireRole('ADMIN', 'SANCHALAK'), deleteTeam);
