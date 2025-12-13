@@ -4,7 +4,7 @@ const Team = require('../models/Team');
 
 const createAhevaal = async (req, res) => {
   try {
-    const { name, phone, dob, address, specialExp, startTime, endTime, teamId: teamIdFromBody } = req.body;
+    const { name, phone, dob, address, specialExp, startTime, endTime, grade, teamId: teamIdFromBody } = req.body;
 
     if (!req.user?.id) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -27,6 +27,10 @@ const createAhevaal = async (req, res) => {
 
     if (!teamId) return res.status(400).json({ message: 'User is not assigned to any team' });
 
+    const allowedGrades = ['A', 'B', 'C'];
+    const normalizedGrade = typeof grade === 'string' ? grade.toUpperCase() : 'A';
+    const safeGrade = allowedGrades.includes(normalizedGrade) ? normalizedGrade : 'A';
+
     const ahevaal = await Ahevaal.create({
       createdBy: req.user.id,
       teamId,
@@ -38,6 +42,7 @@ const createAhevaal = async (req, res) => {
       specialExp,
       startTime,
       endTime,
+      grade: safeGrade,
     });
 
     res.status(201).json(ahevaal);

@@ -44,7 +44,7 @@ const exportCSV = async (req, res) => {
     if (filter.none) return res.json([]);
     const ahevaals = await Ahevaal.find(filter).lean();
 
-    const fields = ['name', 'phone', 'dob', 'address', 'specialExp', 'startTime', 'endTime', 'createdAt'];
+    const fields = ['name', 'phone', 'dob', 'address', 'grade', 'specialExp', 'startTime', 'endTime', 'createdAt'];
     const parser = new Parser({ fields });
     const csv = parser.parse(ahevaals);
 
@@ -80,6 +80,7 @@ const exportPDF = async (req, res) => {
         .text(`   Phone: ${a.phone}`)
         .text(`   DOB: ${a.dob ? new Date(a.dob).toLocaleDateString() : '-'}`)
         .text(`   Address: ${a.address || '-'}`)
+        .text(`   Grade: ${a.grade || '-'}`)
         .text(`   Special: ${a.specialExp || '-'}`)
         .text(`   Start: ${a.startTime ? new Date(a.startTime).toLocaleString() : '-'}`)
         .text(`   End: ${a.endTime ? new Date(a.endTime).toLocaleString() : '-'}`)

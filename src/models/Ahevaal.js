@@ -11,6 +11,7 @@ const ahevaalSchema = new mongoose.Schema(
     dob: { type: Date }, // Date of birth (optional)
     address: { type: String },
     specialExp: { type: String }, // any special experience
+    grade: { type: String, enum: ['A', 'B', 'C'], default: 'A' },
     startTime: { type: Date },
     endTime: { type: Date },
   },
