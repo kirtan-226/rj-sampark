@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Team = require('../models/Team');
 
 const login = async (req, res) => {
   try {
@@ -9,6 +10,31 @@ const login = async (req, res) => {
 
     if (password !== user.passwordHash) return res.status(400).json({ message: 'Invalid credentials' });
 
+    let teamName = null;
+    let teamCode = null;
+    let teamId = user.teamId;
+
+    if (!teamId) {
+      const linkedTeam = await Team.findOne({
+        $or: [{ leader: user._id }, { members: user._id }, { teamLoginUser: user._id }],
+      })
+        .select('_id name teamCode mandalId')
+        .lean();
+      if (linkedTeam) {
+        teamId = linkedTeam._id;
+        if (!user.mandalId && linkedTeam.mandalId) user.mandalId = linkedTeam.mandalId;
+        await User.updateOne({ _id: user._id }, { teamId: linkedTeam._id, mandalId: user.mandalId });
+        teamName = linkedTeam.name;
+        teamCode = linkedTeam.teamCode;
+      }
+    } else {
+      const team = await Team.findById(teamId).select('name teamCode').lean();
+      if (team) {
+        teamName = team.name;
+        teamCode = team.teamCode;
+      }
+    }
+
     res.json({
       user: {
         id: user._id,
@@ -17,7 +43,9 @@ const login = async (req, res) => {
         phone: user.phone,
         role: user.role,
         mandalId: user.mandalId,
-        teamId: user.teamId,
+        teamId,
+        teamName,
+        teamCode,
       },
       message: 'Login successful. Use x-user-id header (user.id) for API calls.',
     });

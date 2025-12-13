@@ -1,12 +1,12 @@
-// seedUsers.js
+// seedUsers.js (Sanchalak-only seeding)
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./src/models/User');
 const Mandal = require('./src/models/Mandal');
-const Team = require('./src/models/Team');
-const Ahevaal = require('./src/models/Ahevaal');
 
 const xetraById = { 1: 'Bharuch-1', 2: 'Bharuch-2', 3: 'Bharuch-3' };
+const BASE_SEQ = 100; // first user in a mandal starts at XXX100
+const BASE_PHONE = 9000007000; // unique phone generator
 
 const mandalsFromSql = [
   { name: 'Radhakrushna', code: 'RK', xetra: xetraById[1] },
@@ -54,37 +54,31 @@ const mandalsFromSql = [
   { name: 'Osara', code: 'OS', xetra: xetraById[3] },
 ];
 
-const users = [
-  { name: 'Admin', phone: '9990001111', password: 'Admin@123', role: 'ADMIN', userId: 'ADMIN001' },
+// Determine the next userId for a mandal code (cached per code)
+const getNextUserIdForCode = async (code, cache) => {
+  if (!code) return null;
 
-  {
-    name: 'Nirdeshak Bharuch-1',
-    phone: '9990002001',
-    password: 'Pass@123',
-    role: 'NIRDESHAK',
-    xetra: 'Bharuch-1',
-    userId: 'NIRDESHAK001',
-  },
+  if (!cache[code]) {
+    const usersWithCode = await User.find({ userId: { $regex: `^${code}\\d+$`, $options: 'i' } }).select('userId');
+    let maxSeq = 0;
+    usersWithCode.forEach((u) => {
+      const digits = u.userId.replace(/^[A-Za-z]+/, '');
+      const n = parseInt(digits, 10);
+      if (!Number.isNaN(n)) maxSeq = Math.max(maxSeq, n);
+    });
+    cache[code] = Math.max(maxSeq, BASE_SEQ - 1);
+  }
 
-  // Sanchalak (crud in their mandal) – mandalCode + seq -> userId like RK100
-  { name: 'Sanchalak RK Mandal', phone: '9990003001', password: 'Pass@123', role: 'SANCHALAK', mandalCode: 'RK', seq: 100 },
-
-  // Nirikshak (read-only for specific mandals)
-  { name: 'Nirikshak RK', phone: '9990004001', password: 'Pass@123', role: 'NIRIKSHAK', assignedCodes: ['RK'], seq: 101 },
-
-  // Karyakar (ahevaal submitter)
-  { name: 'Karyakar RK', phone: '9990005001', password: 'Pass@123', role: 'KARYAKAR', mandalCode: 'RK', seq: 102 },
-  { name: 'Team Leader RK', phone: '9990005002', password: 'Pass@123', role: 'KARYAKAR', mandalCode: 'RK', seq: 103 },
-  { name: 'Team Member RK', phone: '9990005003', password: 'Pass@123', role: 'KARYAKAR', mandalCode: 'RK', seq: 104 },
-  { name: 'Team Leader NK', phone: '9990005004', password: 'Pass@123', role: 'KARYAKAR', mandalCode: 'NK', seq: 200 },
-  { name: 'Team Member NK', phone: '9990005005', password: 'Pass@123', role: 'KARYAKAR', mandalCode: 'NK', seq: 201 },
-];
+  cache[code] += 1;
+  if (cache[code] < BASE_SEQ) cache[code] = BASE_SEQ;
+  return `${code}${String(cache[code]).padStart(3, '0')}`;
+};
 
 (async function seed() {
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected. Seeding mandals and users...');
+    console.log('Connected. Seeding mandals and Sanchalaks...');
 
     // Upsert mandals from SQL and attach sequential mandal_id (1...N)
     let mandalSeq = 1;
@@ -99,151 +93,56 @@ const users = [
     const mandalMap = {};
     mandals.forEach((m) => (mandalMap[m.code] = m._id));
 
-    const userMap = {};
-    for (const u of users) {
-      const baseCode = u.mandalCode || u.assignedCodes?.[0];
-      const userId = baseCode ? `${baseCode}${String(u.seq || 1).padStart(3, '0')}` : u.userId;
-      const mandalId = u.mandalCode ? mandalMap[u.mandalCode] : null;
-      const assignedMandals =
-        u.assignedCodes?.map((c) => mandalMap[c]).filter(Boolean) || [];
+    // Ensure a single admin user exists
+    const adminUser = {
+      userId: 'ADMIN001',
+      name: 'Admin',
+      phone: '9990001111',
+      password: 'Admin@123',
+      role: 'ADMIN',
+    };
+    const existingAdmin = await User.findOne({
+      $or: [{ userId: adminUser.userId }, { phone: adminUser.phone }],
+    });
+    if (existingAdmin) {
+      console.log(`Admin ${existingAdmin.userId} exists, skipping.`);
+    } else {
+      await User.create({
+        userId: adminUser.userId,
+        name: adminUser.name,
+        phone: adminUser.phone,
+        passwordHash: adminUser.password, // plain text per current setup
+        role: adminUser.role,
+      });
+      console.log(`Created admin ${adminUser.userId}`);
+    }
 
-      const existing = await User.findOne({ $or: [{ phone: u.phone }, { userId }] });
+    // Build Sanchalak users (one per mandal) with unique phones and sequential userIds per mandal code
+    const seqCache = {};
+    for (const [idx, m] of mandals.entries()) {
+      const userId = await getNextUserIdForCode(m.code, seqCache);
+      const phone = String(BASE_PHONE + idx + 1);
+
+      const existing = await User.findOne({ $or: [{ phone }, { userId }] });
       if (existing) {
-        console.log(`User ${userId} exists, skipping.`);
-        userMap[userId] = existing._id;
+        console.log(`User ${existing.userId} exists for mandal ${m.code}, skipping.`);
         continue;
       }
 
-      const created = await User.create({
+      await User.create({
         userId,
-        name: u.name,
-        phone: u.phone,
-        passwordHash: u.password, // plain text per your setup
-        role: u.role,
-        mandalId,
-        xetra: u.xetra || null,
-        assignedMandals,
+        name: `Sanchalak ${m.name}`,
+        phone,
+        passwordHash: 'Pass@123', // plain text per current setup
+        role: 'SANCHALAK',
+        mandalId: m._id,
+        xetra: m.xetra || null,
       });
 
-      userMap[userId] = created._id;
-      console.log(`Created user ${userId} (${u.role})`);
+      console.log(`Created Sanchalak ${userId} for mandal ${m.code}`);
     }
 
-    // Sample teams (each tied to a single mandal)
-    const teams = [
-      {
-        teamCode: 'T001',
-        name: 'RK Outreach Team',
-        mandalCode: 'RK',
-        leaderUserId: 'RK103',
-        memberUserIds: ['RK104', 'RK102'],
-      },
-      {
-        teamCode: 'T002',
-        name: 'NK Outreach Team',
-        mandalCode: 'NK',
-        leaderUserId: 'NK200',
-        memberUserIds: ['NK201'],
-      },
-    ];
-
-    const teamMap = {};
-    for (const t of teams) {
-      const mandalId = mandalMap[t.mandalCode];
-      const leaderId = userMap[t.leaderUserId];
-      const members = t.memberUserIds.map((id) => userMap[id]).filter(Boolean);
-
-      if (!mandalId || !leaderId) {
-        console.log(`Skipping team ${t.teamCode}: missing mandal/leader`);
-        continue;
-      }
-
-      const existingTeam = await Team.findOne({ teamCode: t.teamCode });
-      if (existingTeam) {
-        console.log(`Team ${t.teamCode} exists, skipping.`);
-        teamMap[t.teamCode] = existingTeam._id;
-        if (leaderId || members.length) {
-          await User.updateMany(
-            { _id: { $in: [leaderId, ...members].filter(Boolean) } },
-            { teamId: existingTeam._id }
-          );
-        }
-        continue;
-      }
-
-      const createdTeam = await Team.create({
-        teamCode: t.teamCode,
-        name: t.name,
-        mandalId,
-        leader: leaderId,
-        members,
-      });
-
-      teamMap[t.teamCode] = createdTeam._id;
-      if (leaderId || members.length) {
-        await User.updateMany(
-          { _id: { $in: [leaderId, ...members].filter(Boolean) } },
-          { teamId: createdTeam._id }
-        );
-      }
-      console.log(`Created team ${t.teamCode}`);
-    }
-
-    // Sample ahevaals (family-level info, tied to team and mandal)
-    const ahevaals = [
-      {
-        name: 'Patel Family',
-        phone: '9000007001',
-        address: '12, Shanti Nagar, Bharuch',
-        teamCode: 'T001',
-        mandalCode: 'RK',
-        createdByUserId: 'RK102',
-      },
-      {
-        name: 'Shah Family',
-        phone: '9000007002',
-        address: '24, Green Park, Bharuch',
-        teamCode: 'T001',
-        mandalCode: 'RK',
-        createdByUserId: 'RK104',
-      },
-      {
-        name: 'Mehta Family',
-        phone: '9000007003',
-        address: '8, Ambica Society, Bharuch',
-        teamCode: 'T002',
-        mandalCode: 'NK',
-        createdByUserId: 'NK201',
-      },
-    ];
-
-    for (const a of ahevaals) {
-      const teamId = teamMap[a.teamCode];
-      const mandalId = mandalMap[a.mandalCode];
-      const createdBy = userMap[a.createdByUserId];
-
-      if (!teamId || !mandalId || !createdBy) {
-        console.log(`Skipping ahevaal for ${a.name}: missing team/mandal/creator`);
-        continue;
-      }
-
-      const exists = await Ahevaal.findOne({ name: a.name, phone: a.phone, teamId });
-      if (exists) {
-        console.log(`Ahevaal for ${a.name} exists, skipping.`);
-        continue;
-      }
-
-      await Ahevaal.create({
-        name: a.name,
-        phone: a.phone,
-        address: a.address,
-        teamId,
-        mandalId,
-        createdBy,
-      });
-      console.log(`Created ahevaal for ${a.name}`);
-    }
-
+    console.log('Skipping team and ahevaal seeding (Sanchalaks only).');
     console.log('Seeding finished');
     process.exit(0);
   } catch (err) {

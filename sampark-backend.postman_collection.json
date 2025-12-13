@@ -168,6 +168,96 @@
               ]
             }
           }
+        },
+        {
+          "name": "List Users (ADMIN/SANCHALAK/NIRDESHAK/NIRIKSHAK)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuthAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?role=KARYAKAR&mandalId={{mandalIdRK}}&teamId={{teamIdT001}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "KARYAKAR"
+                },
+                {
+                  "key": "mandalId",
+                  "value": "{{mandalIdRK}}"
+                },
+                {
+                  "key": "teamId",
+                  "value": "{{teamIdT001}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuthAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"9000007001\",\n  \"teamId\": \"{{teamIdT001}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{memberUserId1}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{memberUserId1}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User (ADMIN/SANCHALAK)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic {{basicAuthAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{memberUserId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{memberUserId2}}"
+              ]
+            }
+          }
         }
       ]
     },
@@ -479,7 +569,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Shyam Bhai\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Bharuch, XYZ area\",\n  \"specialExp\": \"Regular satsangi since 10 years\",\n  \"startTime\": \"2025-01-10T09:00:00.000Z\",\n  \"endTime\": \"2025-01-10T10:00:00.000Z\"\n}"
+              "raw": "{\n  \"name\": \"Shyam Bhai\",\n  \"phone\": \"9876543210\",\n  \"dob\": \"1995-05-12\",\n  \"address\": \"Bharuch, XYZ area\",\n  \"specialExp\": \"Regular satsangi since 10 years\",\n  \"startTime\": \"2025-01-10T09:00:00.000Z\",\n  \"endTime\": \"2025-01-10T10:00:00.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/ahevaals",

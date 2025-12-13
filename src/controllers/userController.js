@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Team = require('../models/Team');
 const Mandal = require('../models/Mandal');
 
 // Helpers
@@ -141,6 +142,7 @@ const updateUser = async (req, res) => {
 
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    const oldTeamId = user.teamId ? user.teamId.toString() : null;
 
     // Access control: ADMIN or SANCHALAK (own mandal)
     if (req.user.role !== 'ADMIN') {
@@ -160,10 +162,28 @@ const updateUser = async (req, res) => {
     if (teamId !== undefined) {
       if (teamId && !mongoose.Types.ObjectId.isValid(teamId))
         return res.status(400).json({ message: 'Invalid teamId' });
+
+      if (teamId) {
+        const targetTeam = await Team.findById(teamId);
+        if (!targetTeam) return res.status(404).json({ message: 'Team not found' });
+        if (req.user.role === 'SANCHALAK' && req.user.mandalId && targetTeam.mandalId && targetTeam.mandalId.toString() !== req.user.mandalId.toString())
+          return res.status(403).json({ message: 'Cannot move user outside your mandal' });
+      }
+
       user.teamId = teamId || null;
     }
 
     await user.save();
+
+    const newTeamId = user.teamId ? user.teamId.toString() : null;
+    if (oldTeamId && oldTeamId !== newTeamId) {
+      await Team.updateOne({ _id: oldTeamId }, { $pull: { members: user._id } });
+    }
+    if (newTeamId && newTeamId !== oldTeamId) {
+      await Team.updateMany({ _id: { $ne: newTeamId }, members: user._id }, { $pull: { members: user._id } });
+      await Team.updateOne({ _id: newTeamId }, { $addToSet: { members: user._id } });
+    }
+
     res.json({ message: 'User updated', user });
   } catch (err) {
     console.error(err);
