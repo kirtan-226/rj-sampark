@@ -10,6 +10,17 @@ const login = async (req, res) => {
 
     if (password !== user.passwordHash) return res.status(400).json({ message: 'Invalid credentials' });
 
+    const allowedRoles = ['ADMIN', 'SANCHALAK', 'TEAM_LEADER'];
+    let leaderTeam = null;
+    if (!allowedRoles.includes(user.role)) {
+      leaderTeam = await Team.findOne({ leader: user._id }).select('_id name teamCode mandalId').lean();
+      if (!leaderTeam) {
+        return res
+          .status(403)
+          .json({ message: 'Only Admin, Sanchalak or Team Leader accounts can login' });
+      }
+    }
+
     let teamName = null;
     let teamCode = null;
     let teamId = user.teamId;
@@ -26,6 +37,10 @@ const login = async (req, res) => {
         await User.updateOne({ _id: user._id }, { teamId: linkedTeam._id, mandalId: user.mandalId });
         teamName = linkedTeam.name;
         teamCode = linkedTeam.teamCode;
+      } else if (leaderTeam) {
+        teamId = leaderTeam._id;
+        teamName = leaderTeam.name;
+        teamCode = leaderTeam.teamCode;
       }
     } else {
       const team = await Team.findById(teamId).select('name teamCode').lean();

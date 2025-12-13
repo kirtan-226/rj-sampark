@@ -170,6 +170,14 @@ const updateUser = async (req, res) => {
           return res.status(403).json({ message: 'Cannot move user outside your mandal' });
       }
 
+      // Prevent removing a team leader without reassigning leadership
+      if (oldTeamId && teamId?.toString() !== oldTeamId) {
+        const existingTeam = await Team.findById(oldTeamId).select('leader');
+        if (existingTeam?.leader && existingTeam.leader.toString() === user._id.toString()) {
+          return res.status(400).json({ message: 'Cannot remove team leader; assign a new leader first' });
+        }
+      }
+
       user.teamId = teamId || null;
     }
 
