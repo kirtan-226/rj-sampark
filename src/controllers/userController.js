@@ -121,10 +121,22 @@ const listUsers = async (req, res) => {
     if (req.query.role) filter.role = req.query.role;
     if (req.query.phone) filter.phone = req.query.phone;
 
+    const canSeePassword = ['ADMIN', 'SANCHALAK'].includes((req.currentUser?.role || '').toUpperCase());
+
     const users = await User.find(filter)
-      .select('userId name phone role mandalId teamId xetra assignedMandals')
+      .select(
+        `userId name phone role mandalId teamId xetra assignedMandals${canSeePassword ? ' passwordHash' : ''}`
+      )
       .populate('teamId', 'name teamCode');
-    res.json(users);
+
+    const shaped = users.map((u) => {
+      const obj = u.toObject({ virtuals: false });
+      if (canSeePassword) obj.password = obj.passwordHash;
+      delete obj.passwordHash;
+      return obj;
+    });
+
+    res.json(shaped);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
