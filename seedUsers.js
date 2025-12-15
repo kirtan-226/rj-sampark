@@ -5,58 +5,134 @@ const User = require('./src/models/User');
 const Mandal = require('./src/models/Mandal');
 
 const xetraById = { 1: 'Bharuch-1', 2: 'Bharuch-2', 3: 'Bharuch-3' };
-const BASE_SEQ = 100; // first user in a mandal starts at XXX100
-const BASE_PHONE = 9000007000; // unique phone generator
 
-const mandalsFromSql = [
-  { name: 'Radhakrushna', code: 'RK', xetra: xetraById[1] },
-  { name: 'Narayankunj', code: 'NK', xetra: xetraById[1] },
-  { name: 'Maitrinagar', code: 'MT', xetra: xetraById[1] },
-  { name: 'Sahjanand', code: 'SJ', xetra: xetraById[1] },
-  { name: 'Narmadanagar', code: 'NN', xetra: xetraById[1] },
-  { name: 'Surbhi', code: 'SB', xetra: xetraById[1] },
-  { name: 'Vadadla', code: 'VD', xetra: xetraById[3] },
-  { name: 'Zadeshwar', code: 'ZD', xetra: xetraById[1] },
-  { name: 'Manasnagar', code: 'MN', xetra: xetraById[1] },
-  { name: 'Shriniketan', code: 'SK', xetra: xetraById[1] },
-  { name: 'Akshardham', code: 'AD', xetra: xetraById[1] },
-  { name: 'Pramukh Park', code: 'PP', xetra: xetraById[1] },
-  { name: 'Vaibhav', code: 'VB', xetra: xetraById[1] },
-  { name: 'Mandir', code: 'MR', xetra: xetraById[1] },
-  { name: 'Chakla', code: 'CH', xetra: xetraById[2] },
-  { name: 'ShaktiNath', code: 'SN', xetra: xetraById[2] },
-  { name: 'Krushna Nagar', code: 'KN', xetra: xetraById[2] },
-  { name: 'Ali Pura', code: 'AL', xetra: xetraById[2] },
-  { name: 'Mangal Tirth', code: 'ML', xetra: xetraById[2] },
-  { name: 'Narmada Darshan', code: 'ND', xetra: xetraById[2] },
-  { name: 'Ambika Nagar', code: 'AM', xetra: xetraById[2] },
-  { name: 'Ganesh Township', code: 'GT', xetra: xetraById[2] },
-  { name: 'ShreejiKrupa', code: 'SR', xetra: xetraById[2] },
-  { name: 'Mangalya', code: 'MA', xetra: xetraById[2] },
-  { name: 'Chavaj', code: 'CV', xetra: xetraById[2] },
-  { name: 'Pritamnagar', code: 'PT', xetra: xetraById[2] },
-  { name: 'Vejalpur', code: 'VJ', xetra: xetraById[2] },
-  { name: 'Ashray', code: 'AS', xetra: xetraById[2] },
-  { name: 'Mangleshwar', code: 'MG', xetra: xetraById[3] },
-  { name: 'Shukaltirth', code: 'ST', xetra: xetraById[3] },
-  { name: 'Srijisadan', code: 'SS', xetra: xetraById[3] },
-  { name: 'Sriji pravesh', code: 'SP', xetra: xetraById[3] },
-  { name: 'Nikora', code: 'NI', xetra: xetraById[3] },
-  { name: 'Tavra', code: 'TV', xetra: xetraById[3] },
-  { name: 'Golden Residency', code: 'GR', xetra: xetraById[3] },
-  { name: 'Mulad', code: 'MU', xetra: xetraById[3] },
-  { name: 'Govali', code: 'GV', xetra: xetraById[3] },
-  { name: 'Angareshwar', code: 'AG', xetra: xetraById[3] },
-  { name: 'Riddhi Siddhi', code: 'RS', xetra: xetraById[3] },
-  { name: 'Umra', code: 'UM', xetra: xetraById[3] },
-  { name: 'Karmali', code: 'KR', xetra: xetraById[3] },
-  { name: 'Karjan', code: 'KJ', xetra: xetraById[3] },
-  { name: 'Osara', code: 'OS', xetra: xetraById[3] },
+// Mandal + supervisor master from provided sheet
+const mandalSeedData = [
+  {
+    name: 'Shreeji Pravesh',
+    code: 'SP',
+    xetra: xetraById[3],
+    sanchalak: { name: 'Miten Patel', phone: '7046818385' },
+    nirikshak: { name: 'Yogendra Chauhan', phone: '7433088988' },
+  },
+  {
+    name: 'Shriniketan',
+    code: 'SK',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Rahul Patel', phone: '9265908551' },
+    nirikshak: { name: 'Yogendra Chauhan', phone: '7433088988' },
+  },
+  {
+    name: 'Manasnagar',
+    code: 'MN',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Bhavesh Limbachiya', phone: '9909948604' },
+    nirikshak: { name: 'Vishal Patel', phone: '9998991253' },
+  },
+  {
+    name: 'Shreeji Sadan',
+    code: 'SS',
+    xetra: xetraById[3],
+    sanchalak: { name: 'Pranav Patel', phone: '9104724442' },
+    nirikshak: { name: 'Vishal Patel', phone: '9998991253' },
+  },
+  {
+    name: 'Sahjanand',
+    code: 'SJ',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Arpan Bhatt', phone: '9429187209' },
+    nirikshak: { name: 'Dhaval Bhatt', phone: '8128991380' },
+  },
+  {
+    name: 'Narayankunj',
+    code: 'NK',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Mrugesh Patel', phone: '9033980178' },
+    nirikshak: { name: 'Dhaval Bhatt', phone: '8128991380' },
+  },
+  {
+    name: 'Maitrinagar',
+    code: 'MT',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Neel Patel', phone: '9408122729' },
+    nirikshak: { name: 'Pallav Parekh', phone: '8511112160' },
+  },
+  {
+    name: 'Surbhi',
+    code: 'SB',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Aksh Patel', phone: '9313450821' },
+    nirikshak: { name: 'Pallav Parekh', phone: '8511112160' },
+  },
+  {
+    name: 'Radhakrushna',
+    code: 'RK',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Bhargav Patel', phone: '9714814711' },
+    nirikshak: { name: 'Yagnesh Patel', phone: '9033576607' },
+  },
+  {
+    name: 'Zadeshwar',
+    code: 'ZD',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Jaimin Patel', phone: '8866866202' },
+    nirikshak: { name: 'Kaushik Patel', phone: '9662015390' },
+  },
+  {
+    name: 'Ashray',
+    code: 'AS',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Viral Rana', phone: '9313861579' },
+    nirikshak: { name: 'Alpesh Prajapati', phone: '9601260522' },
+  },
+  {
+    name: 'Ganesh Township',
+    code: 'GT',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Sanket Patel', phone: '9924659633' },
+    nirikshak: { name: 'Krupal Patel', phone: '9558801490' },
+  },
+  {
+    name: 'Krushnanagar',
+    code: 'KN',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Bhargav Gohil', phone: '9173515711' },
+    nirikshak: { name: 'Vikas Sarvaiya', phone: '7359351767' },
+  },
+  {
+    name: 'Shaktinath',
+    code: 'SN',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Mihir Patel', phone: '7285024239' },
+    nirikshak: { name: 'Amitkumar Limbachiya', phone: '8141180456' },
+  },
+  {
+    name: 'Chakla',
+    code: 'CH',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Parth Patel', phone: '7043845190' },
+    nirikshak: { name: 'Bhargav Parekh', phone: '7698222802' },
+  },
+  {
+    name: 'Alipura',
+    code: 'AL',
+    xetra: xetraById[2],
+    sanchalak: { name: 'Amit Patel', phone: '8347553945' },
+    nirikshak: { name: 'Arpit Shukla', phone: '7043133205' },
+  },
+  {
+    name: 'Zadeshwar (Mandir)',
+    code: 'ZM',
+    xetra: xetraById[1],
+    sanchalak: { name: 'Daxesh Bhatt', phone: '9998424817' },
+    nirikshak: { name: 'Parashbai Patel', phone: '9898291544' },
+  },
 ];
 
 // Determine the next userId for a mandal code (cached per code)
 const getNextUserIdForCode = async (code, cache) => {
   if (!code) return null;
+  if (!cache[code]) cache[code] = 0;
 
   if (!cache[code]) {
     const usersWithCode = await User.find({ userId: { $regex: `^${code}\\d+$`, $options: 'i' } }).select('userId');
@@ -66,32 +142,79 @@ const getNextUserIdForCode = async (code, cache) => {
       const n = parseInt(digits, 10);
       if (!Number.isNaN(n)) maxSeq = Math.max(maxSeq, n);
     });
-    cache[code] = Math.max(maxSeq, BASE_SEQ - 1);
+    cache[code] = maxSeq;
   }
 
   cache[code] += 1;
-  if (cache[code] < BASE_SEQ) cache[code] = BASE_SEQ;
-  return `${code}${String(cache[code]).padStart(3, '0')}`;
+  const seq = cache[code] < 100 ? 100 : cache[code];
+  return `${code}${String(seq).padStart(3, '0')}`;
+};
+
+// Generate userId for Nirikshak in format <MANDAL_CODE>NR (suffixing numbers if needed)
+const getNirikshakUserId = async (baseCode) => {
+  if (!baseCode) return null;
+  const base = `${baseCode}NR`;
+  const users = await User.find({ userId: { $regex: `^${base}(\\d+)?$`, $options: 'i' } }).select('userId');
+
+  const hasPlain = users.some((u) => (u.userId || '').toUpperCase() === base.toUpperCase());
+  let maxSuffix = 0;
+  users.forEach((u) => {
+    const match = (u.userId || '').match(new RegExp(`^${base}(\\d+)$`, 'i'));
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (!Number.isNaN(n)) maxSuffix = Math.max(maxSuffix, n);
+    }
+  });
+
+  if (!hasPlain) return base;
+  return `${base}${String(maxSuffix + 1).padStart(2, '0')}`;
+};
+
+const passwordFromPhone = (phone, fallback = 'Pass@123') => {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return fallback;
+  return digits.slice(-6);
+};
+
+const mergeObjectIds = (existing = [], incoming = []) => {
+  const set = new Set();
+  [...existing, ...incoming].forEach((id) => {
+    if (!id) return;
+    const val = id.toString();
+    set.add(val);
+  });
+  return Array.from(set).map((id) => new mongoose.Types.ObjectId(id));
 };
 
 (async function seed() {
   try {
+    if (!process.env.MONGO_URI) throw new Error('MONGO_URI not set');
+
     console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected. Seeding mandals and Sanchalaks...');
+    console.log('Connected. Seeding mandals, sanchalaks and nirikshaks...');
 
-    // Upsert mandals from SQL and attach sequential mandal_id (1...N)
-    let mandalSeq = 1;
-    const mandalOps = mandalsFromSql.map((m) =>
-      Mandal.findOneAndUpdate(
-        { code: m.code },
-        { ...m, mandal_id: mandalSeq++ },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
-      )
-    );
-    const mandals = await Promise.all(mandalOps);
+    // Upsert mandals and keep existing mandal_id if present to avoid unique conflicts
+    const highestMandalIdDoc = await Mandal.findOne({}, { mandal_id: 1 }).sort({ mandal_id: -1 }).lean();
+    let nextMandalId = highestMandalIdDoc?.mandal_id ? highestMandalIdDoc.mandal_id + 1 : 1;
     const mandalMap = {};
-    mandals.forEach((m) => (mandalMap[m.code] = m._id));
+
+    for (const entry of mandalSeedData) {
+      const existing = await Mandal.findOne({ code: entry.code }).lean();
+      const mandal_id = existing?.mandal_id || nextMandalId++;
+      const mandal = await Mandal.findOneAndUpdate(
+        { code: entry.code },
+        {
+          name: entry.name,
+          code: entry.code,
+          xetra: entry.xetra || xetraById[1],
+          mandal_id,
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+      mandalMap[entry.code] = mandal._id;
+      console.log(`${existing ? 'Updated' : 'Created'} mandal ${entry.code} (${mandal.name})`);
+    }
 
     // Ensure a single admin user exists
     const adminUser = {
@@ -117,32 +240,89 @@ const getNextUserIdForCode = async (code, cache) => {
       console.log(`Created admin ${adminUser.userId}`);
     }
 
-    // Build Sanchalak users (one per mandal) with unique phones and sequential userIds per mandal code
+    // Build Sanchalak users (one per mandal)
     const seqCache = {};
-    for (const [idx, m] of mandals.entries()) {
-      const userId = await getNextUserIdForCode(m.code, seqCache);
-      const phone = String(BASE_PHONE + idx + 1);
+    for (const entry of mandalSeedData) {
+      const details = entry.sanchalak;
+      if (!details?.name || !details?.phone) continue;
 
-      const existing = await User.findOne({ $or: [{ phone }, { userId }] });
+      const existing = await User.findOne({ phone: details.phone });
       if (existing) {
-        console.log(`User ${existing.userId} exists for mandal ${m.code}, skipping.`);
+        existing.name = details.name;
+        existing.role = 'SANCHALAK';
+        existing.mandalId = mandalMap[entry.code];
+        existing.xetra = entry.xetra || null;
+        existing.assignedMandals = [];
+        existing.passwordHash = passwordFromPhone(details.phone);
+        await existing.save();
+        console.log(`Updated Sanchalak ${existing.userId} for mandal ${entry.code}`);
         continue;
       }
 
+      const userId = await getNextUserIdForCode(entry.code, seqCache);
       await User.create({
         userId,
-        name: `Sanchalak ${m.name}`,
-        phone,
-        passwordHash: 'Pass@123', // plain text per current setup
+        name: details.name,
+        phone: details.phone,
+        passwordHash: passwordFromPhone(details.phone),
         role: 'SANCHALAK',
-        mandalId: m._id,
-        xetra: m.xetra || null,
+        mandalId: mandalMap[entry.code],
+        xetra: entry.xetra || null,
+        assignedMandals: [],
       });
-
-      console.log(`Created Sanchalak ${userId} for mandal ${m.code}`);
+      console.log(`Created Sanchalak ${userId} for mandal ${entry.code}`);
     }
 
-    console.log('Skipping team and ahevaal seeding (Sanchalaks only).');
+    // Aggregate nirikshaks; merge if same phone appears for multiple mandals
+    const nirikshakMap = {};
+    for (const entry of mandalSeedData) {
+      if (!entry.nirikshak) continue;
+      const { name, phone } = entry.nirikshak;
+      const key = phone || name;
+      if (!key) continue;
+
+      if (!nirikshakMap[key]) {
+        nirikshakMap[key] = { name: name || 'Nirikshak', phone: phone || '', mandalCodes: new Set() };
+      }
+      if (!nirikshakMap[key].name && name) nirikshakMap[key].name = name;
+      if (!nirikshakMap[key].phone && phone) nirikshakMap[key].phone = phone;
+      nirikshakMap[key].mandalCodes.add(entry.code);
+    }
+
+    for (const agg of Object.values(nirikshakMap)) {
+      const mandalIds = Array.from(agg.mandalCodes)
+        .map((code) => mandalMap[code])
+        .filter(Boolean);
+      if (!mandalIds.length) continue;
+
+      const primaryCode = Array.from(agg.mandalCodes)[0];
+      const preferredUserId = await getNirikshakUserId(primaryCode);
+      const existing = agg.phone ? await User.findOne({ phone: agg.phone }) : null;
+      const mergedMandals = mergeObjectIds(existing?.assignedMandals || [], mandalIds);
+
+      if (existing) {
+        existing.name = agg.name;
+        existing.role = 'NIRIKSHAK';
+        existing.mandalId = null;
+        existing.assignedMandals = mergedMandals;
+        existing.passwordHash = passwordFromPhone(agg.phone);
+        await existing.save();
+        console.log(`Updated Nirikshak ${existing.userId} (${agg.name}) for codes ${Array.from(agg.mandalCodes).join(', ')}`);
+      } else {
+        const userId = preferredUserId || (await getNextUserIdForCode(primaryCode, seqCache));
+        await User.create({
+          userId,
+          name: agg.name,
+          phone: agg.phone,
+          passwordHash: passwordFromPhone(agg.phone),
+          role: 'NIRIKSHAK',
+          mandalId: null,
+          assignedMandals: mergedMandals,
+        });
+        console.log(`Created Nirikshak ${userId} (${agg.name}) for codes ${Array.from(agg.mandalCodes).join(', ')}`);
+      }
+    }
+
     console.log('Seeding finished');
     process.exit(0);
   } catch (err) {

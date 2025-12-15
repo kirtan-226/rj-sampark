@@ -10,20 +10,25 @@ const login = async (req, res) => {
 
     if (password !== user.passwordHash) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const allowedRoles = ['ADMIN', 'SANCHALAK', 'TEAM_LEADER'];
+    const allowedRoles = ['ADMIN', 'SANCHALAK', 'TEAM_LEADER', 'NIRIKSHAK'];
     let leaderTeam = null;
     if (!allowedRoles.includes(user.role)) {
       leaderTeam = await Team.findOne({ leader: user._id }).select('_id name teamCode mandalId').lean();
       if (!leaderTeam) {
         return res
           .status(403)
-          .json({ message: 'Only Admin, Sanchalak or Team Leader accounts can login' });
+          .json({ message: 'Only Admin, Sanchalak, Nirikshak or Team Leader accounts can login' });
       }
     }
 
     let teamName = null;
     let teamCode = null;
     let teamId = user.teamId;
+    const assignedMandals = user.assignedMandals || [];
+    let mandalId = user.mandalId;
+    if (!mandalId && assignedMandals.length) {
+      mandalId = assignedMandals[0];
+    }
 
     if (!teamId) {
       const linkedTeam = await Team.findOne({
@@ -33,8 +38,8 @@ const login = async (req, res) => {
         .lean();
       if (linkedTeam) {
         teamId = linkedTeam._id;
-        if (!user.mandalId && linkedTeam.mandalId) user.mandalId = linkedTeam.mandalId;
-        await User.updateOne({ _id: user._id }, { teamId: linkedTeam._id, mandalId: user.mandalId });
+        if (!mandalId && linkedTeam.mandalId) mandalId = linkedTeam.mandalId;
+        await User.updateOne({ _id: user._id }, { teamId: linkedTeam._id, mandalId });
         teamName = linkedTeam.name;
         teamCode = linkedTeam.teamCode;
       } else if (leaderTeam) {
@@ -57,7 +62,8 @@ const login = async (req, res) => {
         userId: user.userId,
         phone: user.phone,
         role: user.role,
-        mandalId: user.mandalId,
+        mandalId,
+        assignedMandals,
         teamId,
         teamName,
         teamCode,
