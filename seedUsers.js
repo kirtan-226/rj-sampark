@@ -150,24 +150,23 @@ const getNextUserIdForCode = async (code, cache) => {
   return `${code}${String(seq).padStart(3, '0')}`;
 };
 
-// Generate userId for Nirikshak in format <MANDAL_CODE>NR (suffixing numbers if needed)
+// Generate userId for Nirikshak in format <MANDAL_CODE>NR<NNN>, starting at 100
 const getNirikshakUserId = async (baseCode) => {
   if (!baseCode) return null;
-  const base = `${baseCode}NR`;
-  const users = await User.find({ userId: { $regex: `^${base}(\\d+)?$`, $options: 'i' } }).select('userId');
+  const prefix = `${baseCode}NR`;
+  const users = await User.find({ userId: { $regex: `^${prefix}(\\d+)$`, $options: 'i' } }).select('userId');
 
-  const hasPlain = users.some((u) => (u.userId || '').toUpperCase() === base.toUpperCase());
-  let maxSuffix = 0;
+  let maxSeq = 99;
   users.forEach((u) => {
-    const match = (u.userId || '').match(new RegExp(`^${base}(\\d+)$`, 'i'));
+    const match = (u.userId || '').match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
     if (match) {
       const n = parseInt(match[1], 10);
-      if (!Number.isNaN(n)) maxSuffix = Math.max(maxSuffix, n);
+      if (!Number.isNaN(n)) maxSeq = Math.max(maxSeq, n);
     }
   });
 
-  if (!hasPlain) return base;
-  return `${base}${String(maxSuffix + 1).padStart(2, '0')}`;
+  const nextSeq = Math.max(100, maxSeq + 1);
+  return `${prefix}${String(nextSeq).padStart(3, '0')}`;
 };
 
 const passwordFromPhone = (phone, fallback = 'Pass@123') => {

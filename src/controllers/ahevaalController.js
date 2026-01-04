@@ -67,9 +67,12 @@ const listByMandal = async (req, res) => {
     let mandalIds = [];
 
     if (req.user.role === 'ADMIN') {
-      if (req.params.mandalId) mandalIds = [req.params.mandalId];
-      else if (req.user.mandalId) mandalIds = [req.user.mandalId];
-      else mandalIds = null; // all
+      if (req.params.mandalId) {
+        mandalIds = [req.params.mandalId];
+      } else {
+        const allMandals = await Mandal.find({}).select('_id');
+        mandalIds = allMandals.map((m) => m._id.toString());
+      }
     } else if (req.user.role === 'SANCHALAK') {
       mandalIds = req.user.mandalId ? [req.user.mandalId] : [];
     } else if (req.user.role === 'NIRDESHAK') {

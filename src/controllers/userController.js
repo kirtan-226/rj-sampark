@@ -33,7 +33,10 @@ const passwordFromPhone = (phone) => {
 };
 
 const getAllowedMandalIds = async (user) => {
-  if (user.role === 'ADMIN') return null; // all
+  if (user.role === 'ADMIN') {
+    const mandals = await Mandal.find({}).select('_id');
+    return mandals.map((m) => m._id); // all mandals explicitly
+  }
   if (user.role === 'SANCHALAK') return user.mandalId ? [user.mandalId] : [];
   if (user.role === 'NIRDESHAK') {
     if (!user.xetra) return [];
@@ -110,13 +113,30 @@ const listUsers = async (req, res) => {
     const filter = {};
     const allowedMandals = await getAllowedMandalIds(req.currentUser || {});
 
+    const mandalId = req.query.mandalId;
+    const mandalOr = [];
+    const allowedOr = [];
+
+    if (mandalId) {
+      mandalOr.push({ mandalId });
+      mandalOr.push({ assignedMandals: mandalId });
+    }
     if (allowedMandals && allowedMandals.length) {
-      filter.mandalId = { $in: allowedMandals };
+      allowedOr.push({ mandalId: { $in: allowedMandals } });
+      allowedOr.push({ assignedMandals: { $in: allowedMandals } });
     } else if (allowedMandals && allowedMandals.length === 0 && req.currentUser?.role !== 'ADMIN') {
       return res.json([]);
     }
 
-    if (req.query.mandalId) filter.mandalId = req.query.mandalId;
+    // Combine mandal filter and allowed scope
+    if (mandalOr.length && allowedOr.length) {
+      filter.$and = [{ $or: mandalOr }, { $or: allowedOr }];
+    } else if (mandalOr.length) {
+      filter.$or = mandalOr;
+    } else if (allowedOr.length) {
+      filter.$or = allowedOr;
+    }
+
     if (req.query.teamId) filter.teamId = req.query.teamId;
     if (req.query.role) filter.role = req.query.role;
     if (req.query.phone) filter.phone = req.query.phone;

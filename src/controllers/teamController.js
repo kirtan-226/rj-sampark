@@ -18,7 +18,10 @@ const generateTeamCode = async () => {
 };
 
 const getAllowedMandalIds = async (user) => {
-  if (user.role === 'ADMIN') return null; // all
+  if (user.role === 'ADMIN') {
+    const mandals = await Mandal.find({}).select('_id');
+    return mandals.map((m) => m._id); // all mandals explicitly
+  }
   if (user.role === 'SANCHALAK') return user.mandalId ? [user.mandalId] : [];
   if (user.role === 'NIRDESHAK') {
     if (!user.xetra) return [];

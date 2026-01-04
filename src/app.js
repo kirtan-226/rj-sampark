@@ -17,15 +17,16 @@ const app = express();
 // cors + logging + parsers
 app.use(
   cors({
-    origin: "*",
+    // Frontend runs on Vite dev server by default; allow that origin. Use "*" if you truly need any origin.
+    origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
   })
 );
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization,x-user-id");
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });

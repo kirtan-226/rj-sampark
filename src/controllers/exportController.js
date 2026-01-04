@@ -7,7 +7,10 @@ const buildFilterFromQuery = async (req) => {
   let mandalIds = [];
   if (req.user.role === 'ADMIN') {
     if (req.query.mandalId) mandalIds = [req.query.mandalId];
-    else mandalIds = null; // all
+    else {
+      const allMandals = await Mandal.find({}).select('_id');
+      mandalIds = allMandals.map((m) => m._id.toString()); // all mandals explicitly
+    }
   } else if (req.user.role === 'SANCHALAK') {
     mandalIds = req.user.mandalId ? [req.user.mandalId] : [];
   } else if (req.user.role === 'NIRDESHAK') {
