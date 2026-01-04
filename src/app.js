@@ -15,16 +15,28 @@ const mandalRoutes = require("./routes/mandalRoutes");
 const app = express();
 
 // cors + logging + parsers
+const frontendOrigins = (process.env.FRONTEND_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const defaultOrigin = "http://localhost:5173";
+
 app.use(
   cors({
-    // Frontend runs on Vite dev server by default; allow that origin. Use "*" if you truly need any origin.
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // mobile apps / curl
+      const allowed = frontendOrigins.length ? frontendOrigins : [defaultOrigin, "*"];
+      if (allowed.includes("*") || allowed.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
   })
 );
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  const allowed = frontendOrigins.length ? frontendOrigins : [defaultOrigin, "*"];
+  const origin = allowed.includes("*") ? "*" : req.headers.origin || allowed[0];
+  res.header("Access-Control-Allow-Origin", origin);
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type,Authorization,x-user-id");
   if (req.method === "OPTIONS") return res.sendStatus(200);
