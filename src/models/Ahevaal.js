@@ -9,6 +9,7 @@ const ahevaalSchema = new mongoose.Schema(
     name: { type: String, required: true }, // Main field person's name
     phone: { type: String, required: true },
     dob: { type: Date }, // Date of birth (optional)
+    samparkDate: { type: Date }, // Sampark date (optional)
     address: { type: String },
     specialExp: { type: String }, // any special experience
     grade: { type: String, enum: ['A', 'B', 'C'], default: 'A' },

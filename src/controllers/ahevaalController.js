@@ -4,7 +4,7 @@ const Team = require('../models/Team');
 
 const createAhevaal = async (req, res) => {
   try {
-    const { name, phone, dob, address, specialExp, startTime, endTime, grade, teamId: teamIdFromBody } = req.body;
+    const { name, phone, dob, samparkDate, address, specialExp, startTime, endTime, grade, teamId: teamIdFromBody } = req.body;
 
     if (!req.user?.id) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -38,6 +38,7 @@ const createAhevaal = async (req, res) => {
       name,
       phone,
       dob: dob || null,
+      samparkDate: samparkDate || null,
       address,
       specialExp,
       startTime,
